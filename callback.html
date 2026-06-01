@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion Etsy...</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#F6F8FA;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.card{background:#fff;border-radius:16px;border:1px solid #E1E3E5;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:48px 40px;text-align:center;max-width:420px;width:90%;}
+.icon{font-size:48px;margin-bottom:16px;}
+h1{font-size:20px;font-weight:700;color:#202223;margin-bottom:8px;}
+p{font-size:14px;color:#6D7175;margin-bottom:24px;}
+.status{padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px;}
+.status.ok{background:#E3F1ED;color:#008060;}
+.status.err{background:#FFF4F4;color:#D72C0D;}
+.status.loading{background:#EBF2FC;color:#2C6ECB;}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 24px;background:#008060;color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .18s;}
+.btn:hover{background:#006048;}
+.spinner{width:24px;height:24px;border:3px solid #E1E3E5;border-top-color:#008060;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.token-box{background:#F6F8FA;border:1px solid #E1E3E5;border-radius:8px;padding:12px;font-size:12px;font-family:'Courier New',monospace;word-break:break-all;text-align:left;margin-bottom:16px;color:#202223;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon" id="icon">⏳</div>
+  <h1 id="title">Connexion Etsy en cours...</h1>
+  <p id="desc">Échange du code d'autorisation</p>
+  <div class="spinner" id="spinner"></div>
+  <div class="status loading" id="status">Traitement en cours...</div>
+  <div id="token-section" style="display:none">
+    <div class="token-box" id="token-display"></div>
+    <a href="dashboard.html" class="btn">→ Aller au dashboard</a>
+  </div>
+</div>
+
+<script>
+const FUNC = "https://fnvyeppsaypokvifeblz.supabase.co/functions/v1";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZudnllcHBzYXlwb2t2aWZlYmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUyMzYsImV4cCI6MjA5NTkwMTIzNn0.tKpndsTvN3HkaYoxzCcrxD6ad_S5PiLfOcQtyQrttqo";
+
+// PKCE code verifier — must match what was used to generate code_challenge
+// We store it in localStorage before redirecting
+const CODE_VERIFIER = localStorage.getItem('etsy_code_verifier') || "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+
+async function handleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+
+  if (error) {
+    setStatus('err', '❌ Erreur Etsy', error, '');
+    return;
+  }
+
+  if (!code) {
+    setStatus('err', '❌ Pas de code', 'Aucun code reçu depuis Etsy', '');
+    return;
+  }
+
+  setStatus('loading', '⏳ Échange du code...', 'Communication avec Supabase', '');
+
+  try {
+    const res = await fetch(`${FUNC}/etsy-oauth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON },
+      body: JSON.stringify({ action: 'exchange_token', code, code_verifier: CODE_VERIFIER })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.token && data.token.access_token) {
+      // Save token in localStorage
+      localStorage.setItem('etsy_access_token', data.token.access_token);
+      localStorage.setItem('etsy_refresh_token', data.token.refresh_token || '');
+      
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('icon').textContent = '✅';
+      document.getElementById('title').textContent = 'Etsy connecté !';
+      document.getElementById('desc').textContent = 'Ton Access Token a été généré avec succès.';
+      document.getElementById('status').className = 'status ok';
+      document.getElementById('status').textContent = '✅ Connexion Etsy réussie !';
+      document.getElementById('token-section').style.display = 'block';
+      document.getElementById('token-display').textContent = 
+        'Access Token: ' + data.token.access_token.slice(0,20) + '...\n' +
+        'Copie ce token et ajoute-le dans Supabase Secrets:\nETSY_ACCESS_TOKEN = ' + data.token.access_token;
+
+      // Auto redirect after 3s
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 4000);
+    } else {
+      const errMsg = data.token?.error_description || data.error || JSON.stringify(data);
+      setStatus('err', '❌ Erreur token', errMsg, '');
+    }
+  } catch(e) {
+    setStatus('err', '❌ Erreur réseau', e.message, '');
+  }
+}
+
+function setStatus(type, title, desc, extra) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('icon').textContent = type === 'ok' ? '✅' : type === 'err' ? '❌' : '⏳';
+  document.getElementById('title').textContent = title;
+  document.getElementById('desc').textContent = desc;
+  document.getElementById('status').className = 'status ' + type;
+  document.getElementById('status').textContent = desc;
+}
+
+handleCallback();
+</script>
+</body>
+</html>
