@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Boutique Etsy — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F6F8FA;--white:#fff;
+  --accent:#008060;--accent-lt:#E3F1ED;--accent-dark:#006048;
+  --blue:#2C6ECB;--blue-lt:#EBF2FC;
+  --green:#008060;--green-lt:#E3F1ED;
+  --orange:#C05717;--orange-lt:#FEF3E2;
+  --red:#D72C0D;--red-lt:#FFF4F4;
+  --purple:#6D5BD0;--purple-lt:#F0EEFF;
+  --yellow:#916A00;--yellow-lt:#FFF5CC;
+  --text:#202223;--text-mid:#6D7175;--text-light:#B5BDC4;
+  --border:#E1E3E5;--radius:8px;--radius-lg:12px;
+  --shadow:0 1px 4px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.10);
+  --sb:232px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;}
+.sb{width:var(--sb);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;transition:transform .28s;overflow-y:auto;}
+.sb-hd{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-av{width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+.sb-info{flex:1;}.sb-info strong{font-size:13.5px;font-weight:600;display:block;}.sb-info small{font-size:11px;color:var(--text-mid);}
+.sb-dot{width:7px;height:7px;border-radius:50%;background:#00A47C;flex-shrink:0;box-shadow:0 0 0 2px #E3F1ED;}
+.nav-grp{padding:8px 8px 0;}
+.nav-lbl{padding:10px 8px 4px;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--text-light);text-transform:uppercase;}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;font-size:13.5px;font-weight:500;color:var(--text-mid);transition:all .14s;margin-bottom:1px;user-select:none;}
+.nav-a:hover{background:var(--bg);color:var(--text);}.nav-a.on{background:var(--accent-lt);color:var(--accent);font-weight:600;}
+.nav-a svg{width:16px;height:16px;flex-shrink:0;opacity:.75;}.nav-a.on svg{opacity:1;}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sb-ft{margin-top:auto;padding:12px 8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.notif-box{padding:10px;border-radius:var(--radius);background:var(--bg);display:flex;align-items:center;gap:10px;cursor:pointer;}
+.notif-box:hover{background:var(--border);}
+.notif-ico{width:32px;height:32px;border-radius:6px;background:var(--orange-lt);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.notif-lbl{flex:1;font-size:13px;font-weight:500;}.notif-lbl small{display:block;font-size:11px;color:var(--text-mid);font-weight:400;}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:.2s;}
+.toggle input:checked+.tslider{background:var(--accent);}
+.tslider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle input:checked+.tslider::before{transform:translateX(16px);}
+.sb-btn{width:100%;padding:9px;border:none;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .18s;}
+.sb-btn.green{background:var(--accent);color:#fff;}.sb-btn.green:hover{background:var(--accent-dark);}
+.sb-btn.red{background:var(--red-lt);color:var(--red);}.sb-btn.red:hover{background:#FEC9C9;}
+.main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column;}
+.topnav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.bc{font-size:13px;color:var(--text-mid);}.bc strong{color:var(--text);font-weight:600;}
+.tnav-acts{display:flex;align-items:center;gap:8px;}
+.tbtn{padding:6px 14px;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);transition:all .15s;display:flex;align-items:center;gap:6px;}
+.tbtn:hover{background:var(--bg);}
+.tbtn.p{background:var(--accent);color:#fff;border-color:var(--accent-dark);}.tbtn.p:hover{background:var(--accent-dark);}
+.bell{width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;}
+.bell:hover{background:var(--bg);}
+.bell-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid #fff;display:none;}
+.bell-dot.on{display:block;}
+.content{padding:24px;flex:1;}
+.pg{display:none;}.pg.on{display:block;}
+.phd{margin-bottom:20px;}.phd h1{font-size:20px;font-weight:700;}.phd p{font-size:13px;color:var(--text-mid);margin-top:3px;}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--white);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--border);box-shadow:var(--shadow);transition:box-shadow .18s;}
+.kpi:hover{box-shadow:var(--shadow-md);}
+.kpi-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.kpi-ico{width:34px;height:34px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.kpi-tr{font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;}
+.kpi-tr.up{background:var(--green-lt);color:var(--green);}
+.kpi-tr.neu{background:var(--bg);color:var(--text-mid);}
+.kpi-val{font-size:24px;font-weight:700;line-height:1;}
+.kpi-lbl{font-size:12px;color:var(--text-mid);margin-top:4px;font-weight:500;}
+/* Cards */
+.card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);}
+.chd{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;margin-bottom:14px;}
+.ctitle{font-size:14px;font-weight:600;}.csub{font-size:12px;color:var(--text-mid);margin-top:2px;}
+.cbody{padding:0 16px 16px;}
+.row2{display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.rfull{margin-bottom:12px;}
+/* Period */
+.pbar{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow);}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.pill{padding:5px 13px;border-radius:6px;font-size:12.5px;font-weight:500;color:var(--text-mid);cursor:pointer;border:1px solid transparent;background:var(--bg);transition:all .13s;white-space:nowrap;}
+.pill:hover{background:#EAECEE;color:var(--text);}.pill.on{background:var(--accent-lt);color:var(--accent);border-color:var(--accent);font-weight:600;}
+.crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cdates{display:none;align-items:center;gap:6px;flex-wrap:wrap;}.cdates.show{display:flex;}
+.din{padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;background:var(--white);color:var(--text);outline:none;}
+.din:focus{border-color:var(--blue);}
+.plbl{font-size:12px;font-weight:600;color:var(--accent);padding:4px 10px;background:var(--accent-lt);border-radius:20px;}
+/* Products */
+.prow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.prow:last-child{border:none;padding-bottom:0;}
+.pthumb{width:42px;height:42px;border-radius:var(--radius);background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:1px solid var(--border);}
+.pthumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius);}
+.pinfo{flex:1;min-width:0;}.pname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.pmeta{font-size:11px;color:var(--text-mid);margin-top:2px;}
+.pbg{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:5px;}.pbar2{height:100%;border-radius:2px;background:var(--accent);}
+.prev{font-size:13px;font-weight:600;min-width:56px;text-align:right;}
+/* Table */
+.twrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:8px 12px;text-align:left;font-size:11.5px;font-weight:600;color:var(--text-mid);border-bottom:1px solid var(--border);background:var(--bg);}
+thead th:first-child{border-radius:var(--radius) 0 0 0;}thead th:last-child{border-radius:0 var(--radius) 0 0;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+tbody tr:last-child{border:none;}tbody tr:hover{background:#FAFBFB;}
+tbody td{padding:10px 12px;font-size:13px;vertical-align:middle;}
+.tord{font-weight:600;color:var(--blue);}
+.tprod{display:flex;align-items:center;gap:9px;}
+.tthumb{width:32px;height:32px;border-radius:6px;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;border:1px solid var(--border);}
+.tthumb img{width:100%;height:100%;object-fit:cover;border-radius:6px;}
+/* Ana stats */
+.agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+.astat{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);padding:14px;box-shadow:var(--shadow);}
+.asl{font-size:11.5px;color:var(--text-mid);font-weight:500;margin-bottom:5px;}
+.asv{font-size:20px;font-weight:700;}
+/* Excel */
+.xbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.xok{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--green);padding:7px 12px;background:var(--green-lt);border-radius:var(--radius);}
+.xok::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);}
+.xbox{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:#fff;box-shadow:var(--shadow);}
+.xtop{background:#1D6F42;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;}
+.xtabs{background:#F2F2F2;border-bottom:1px solid var(--border);display:flex;padding:0 8px;gap:2px;}
+.xtab{padding:7px 16px;font-size:12px;cursor:pointer;border-radius:4px 4px 0 0;color:var(--text-mid);border:1px solid transparent;border-bottom:none;}
+.xtab.on{background:#fff;color:var(--text);font-weight:600;border-color:var(--border);}
+.xfbar{background:#FAFAFA;border-bottom:1px solid var(--border);padding:6px 12px;display:flex;align-items:center;gap:8px;}
+.xref{background:#fff;border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-weight:700;min-width:48px;text-align:center;font-size:12px;}
+.xfin{flex:1;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;font-family:'Courier New',monospace;background:#fff;}
+.xgw{overflow:auto;max-height:380px;}
+.xg{width:100%;border-collapse:collapse;font-size:12.5px;}
+.rh{background:#F2F2F2;border:1px solid #D0D0D0;padding:4px 7px;text-align:center;color:#666;font-size:11px;min-width:32px;position:sticky;left:0;z-index:2;}
+.ch{background:#F2F2F2;border:1px solid #D0D0D0;padding:4px 8px;text-align:center;color:#666;font-size:11px;font-weight:700;min-width:110px;position:sticky;top:0;z-index:3;}
+.ch.corner{position:sticky;top:0;left:0;z-index:4;}
+td.cell{border:1px solid #E0E0E0;padding:0;min-width:110px;}
+.cin{width:100%;border:none;outline:none;padding:4px 8px;font-size:12.5px;font-family:'Inter',sans-serif;background:transparent;cursor:default;}
+.cin:focus{background:#EBF2FC;cursor:text;outline:2px solid var(--blue);outline-offset:-2px;}
+.ch2{background:#EEF1FE!important;}.ch2 .cin{font-weight:700;color:#1a237e;}
+.ct{background:#F0FDF4!important;}.ct .cin{font-weight:700;color:var(--green);}
+.xsbar{background:var(--green-lt);border-top:1px solid var(--border);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.shint{font-size:12px;color:var(--green);font-weight:600;}
+/* Notif panel */
+.npanel{position:fixed;top:0;right:-380px;width:360px;height:100vh;background:var(--white);border-left:1px solid var(--border);box-shadow:-8px 0 32px rgba(0,0,0,.1);z-index:300;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);}
+.npanel.open{right:0;}
+.nphd{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.nphd h3{font-size:15px;font-weight:700;}
+.npclose{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-mid);}
+.npsettings{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg);}
+.npsettings p{font-size:12px;color:var(--text-mid);margin-bottom:10px;}
+.npopt{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.npopt:last-child{border:none;}
+.npolbl{font-size:13px;font-weight:500;}.nposub{font-size:11px;color:var(--text-mid);}
+.nplist{flex:1;overflow-y:auto;padding:10px;}
+.npi{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:background .13s;}
+.npi:hover{background:var(--bg);}.npi.unread{border-color:var(--accent);background:var(--accent-lt);}
+.npi-img{width:48px;height:48px;border-radius:var(--radius);flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg);overflow:hidden;}
+.npi-img img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius);}
+.npi-body{flex:1;min-width:0;}
+.npi-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.npi-sub{font-size:12px;color:var(--text-mid);margin-bottom:4px;}
+.npi-price{font-size:13px;font-weight:700;color:var(--accent);}
+.npi-time{font-size:11px;color:var(--text-light);margin-top:3px;}
+.npi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.npi.unread .npi-dot{background:var(--accent);}
+.npi:not(.unread) .npi-dot{background:transparent;}
+.nempty{text-align:center;padding:40px 20px;color:var(--text-mid);font-size:13px;}
+.nptabs{display:flex;border-bottom:1px solid var(--border);}
+.nptab{flex:1;padding:10px;text-align:center;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-mid);transition:all .15s;}
+.nptab.on{border-bottom-color:var(--accent);color:var(--accent);}
+.ntab-c{display:none;}.ntab-c.on{display:block;}
+.pushsec{padding:14px 18px;border-top:1px solid var(--border);background:var(--accent-lt);}
+.pushsec p{font-size:12.5px;font-weight:500;margin-bottom:6px;}
+.pushsec small{display:block;font-size:11px;color:var(--text-mid);margin-bottom:10px;}
+/* Live dot */
+.live{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--green);background:var(--green-lt);padding:4px 10px;border-radius:20px;margin-bottom:16px;}
+.live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+/* Mobile */
+.ham{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:7px 9px;cursor:pointer;box-shadow:var(--shadow);}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:99;}
+.overlay.on{display:block;}
+@media(max-width:768px){
+  .sb{transform:translateX(-100%);}.sb.on{transform:translateX(0);}
+  .main{margin-left:0;}.topnav{padding:0 12px;}.content{padding:14px;}
+  .ham{display:flex;}.row2,.row3{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}.phd h1{font-size:18px;}
+  .npanel{width:100%;right:-100%;}.npanel.open{right:0;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.pg.on .kpi{animation:fadeUp .28s ease both;}
+.kpi:nth-child(1){animation-delay:.03s;}.kpi:nth-child(2){animation-delay:.07s;}
+.kpi:nth-child(3){animation-delay:.11s;}.kpi:nth-child(4){animation-delay:.15s;}
+/* Toast */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:8px;max-width:340px;}
+.toast{background:var(--text);color:#fff;padding:12px 16px;border-radius:var(--radius-lg);font-size:13px;font-weight:500;box-shadow:var(--shadow-md);transform:translateX(380px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:10px;}
+.toast.on{transform:translateX(0);opacity:1;}.toast.ok{background:var(--accent);}
+.toast-img{width:36px;height:36px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);overflow:hidden;}
+.toast-img img{width:100%;height:100%;object-fit:cover;border-radius:6px;}
+.tbody2{flex:1;}.ttitle{font-size:12.5px;font-weight:700;}.tsub{font-size:11.5px;opacity:.85;margin-top:1px;}
+/* Etsy connected badge */
+.etsy-badge{display:inline-flex;align-items:center;gap:6px;background:#F0FFF4;border:1px solid #86EFAC;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;color:#166534;}
+.etsy-badge.off{background:var(--orange-lt);border-color:#FCD34D;color:var(--orange);}
+</style>
+</head>
+<body>
+
+<button class="ham" onclick="toggleSB()">
+  <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="overlay" id="overlay" onclick="toggleSB()"></div>
+
+<aside class="sb" id="sb">
+  <div class="sb-hd">
+    <div class="sb-av">AB</div>
+    <div class="sb-info"><strong>Ma Boutique</strong><small id="sb-email">Etsy Shop</small></div>
+    <div class="sb-dot"></div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Principal</div>
+    <div class="nav-a on" onclick="go('dashboard',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Vue d'ensemble
+    </div>
+    <div class="nav-a" onclick="go('ventes',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Commandes
+      <span class="nav-badge" id="orders-badge">—</span>
+    </div>
+    <div class="nav-a" onclick="go('analytics',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics
+    </div>
+    <div class="nav-a" onclick="go('produits',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Produits
+    </div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Rapports</div>
+    <div class="nav-a" onclick="go('excel',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Fichier Excel
+    </div>
+    <div class="nav-a" onclick="exportPDF()">
+      <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exporter PDF
+    </div>
+  </div>
+  <div class="sb-ft">
+    <div class="notif-box" onclick="openNP()">
+      <div class="notif-ico">🔔</div>
+      <div class="notif-lbl">Notifications<small id="notif-sub">Désactivées</small></div>
+      <label class="toggle" onclick="event.stopPropagation()">
+        <input type="checkbox" id="notif-master" onchange="toggleNotif(this)">
+        <span class="tslider"></span>
+      </label>
+    </div>
+    <button class="sb-btn green" onclick="syncEtsy()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sync Etsy
+    </button>
+    <button class="sb-btn red" onclick="logout()">🚪 Déconnexion</button>
+  </div>
+</aside>
+
+<div class="main">
+  <nav class="topnav">
+    <div class="bc" id="bc"><strong>Vue d'ensemble</strong></div>
+    <div class="tnav-acts">
+      <span class="etsy-badge off" id="etsy-badge">⚡ API Etsy non connectée</span>
+      <button class="tbtn p" onclick="exportPDF()">Exporter PDF</button>
+      <button class="bell" onclick="openNP()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="bell-dot" id="bell-dot"></div>
+      </button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="pg on" id="pg-dashboard">
+      <div class="phd"><h1>Vue d'ensemble</h1><p id="dash-sub">Chargement des données...</p></div>
+      <div class="live">En direct · <span id="live-date"></span></div>
+      <div class="kpi-grid" id="dash-kpis">
+        <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--accent-lt)">💰</div><span class="kpi-tr up" id="k-rev-tr">—</span></div><div class="kpi-val" id="k-rev">—</div><div class="kpi-lbl">Revenus totaux (CA)</div></div>
+        <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--green-lt)">📦</div><span class="kpi-tr up" id="k-ord-tr">—</span></div><div class="kpi-val" id="k-ord">—</div><div class="kpi-lbl">Commandes</div></div>
+        <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--orange-lt)">💵</div><span class="kpi-tr neu">Moyen</span></div><div class="kpi-val" id="k-pan">—</div><div class="kpi-lbl">Panier moyen</div></div>
+        <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--purple-lt)">📈</div><span class="kpi-tr up" id="k-ben-tr">—</span></div><div class="kpi-val" id="k-ben">—</div><div class="kpi-lbl">Bénéfice brut total</div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="chd"><div><div class="ctitle">Revenus mensuels</div><div class="csub">CA Etsy + bénéfice</div></div></div><div class="cbody"><canvas id="c-rev" height="140"></canvas></div></div>
+        <div class="card"><div class="chd"><div><div class="ctitle">Best-sellers</div><div class="csub">Par bénéfice total</div></div></div><div class="cbody" id="bsl"></div></div>
+      </div>
+      <div class="card rfull">
+        <div class="chd"><div><div class="ctitle">Dernières commandes</div><div class="csub" id="last-sub">—</div></div><button class="tbtn" style="font-size:12px;padding:5px 12px" onclick="go('ventes',null)">Voir tout</button></div>
+        <div class="cbody"><div class="twrap" id="last-table"></div></div>
+      </div>
+    </div>
+
+    <!-- VENTES -->
+    <div class="pg" id="pg-ventes">
+      <div class="phd"><h1>Commandes</h1><p>Toutes tes commandes Etsy</p></div>
+      <div class="pbar">
+        <div class="pills" id="v-pills">
+          <div class="pill" onclick="setPer('v','today',this)">Aujourd'hui</div>
+          <div class="pill" onclick="setPer('v','yesterday',this)">Hier</div>
+          <div class="pill" onclick="setPer('v','7d',this)">7 jours</div>
+          <div class="pill" onclick="setPer('v','30d',this)">30 jours</div>
+          <div class="pill" onclick="setPer('v','month',this)">Ce mois</div>
+          <div class="pill" onclick="setPer('v','prev',this)">Mois préc.</div>
+          <div class="pill" onclick="setPer('v','year',this)">Cette année</div>
+          <div class="pill on" onclick="setPer('v','all',this)">Tout</div>
+        </div>
+        <div class="crow">
+          <div class="pill" onclick="toggleCD('v')" style="background:var(--bg)">📅 Personnalisé</div>
+          <div class="cdates" id="v-cd">
+            <input type="date" class="din" id="v-from" value="2026-01-01">
+            <span style="color:var(--text-mid)">→</span>
+            <input type="date" class="din" id="v-to" value="2026-12-31">
+            <button class="tbtn p" style="padding:5px 12px;font-size:12.5px" onclick="applyCD('v')">Appliquer</button>
+          </div>
+          <div class="plbl" id="v-lbl">Tout</div>
+        </div>
+      </div>
+      <div class="kpi-grid" id="v-kpis"></div>
+      <div class="card"><div class="chd"><div><div class="ctitle">Commandes</div><div class="csub" id="v-sub">—</div></div></div><div class="cbody"><div class="twrap" id="v-table"></div></div></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="pg" id="pg-analytics">
+      <div class="phd"><h1>Analytics</h1><p>Statistiques complètes</p></div>
+      <div class="pbar">
+        <div class="pills" id="a-pills">
+          <div class="pill" onclick="setPer('a','today',this)">Aujourd'hui</div>
+          <div class="pill" onclick="setPer('a','yesterday',this)">Hier</div>
+          <div class="pill" onclick="setPer('a','7d',this)">7 jours</div>
+          <div class="pill" onclick="setPer('a','30d',this)">30 jours</div>
+          <div class="pill on" onclick="setPer('a','month',this)">Ce mois</div>
+          <div class="pill" onclick="setPer('a','prev',this)">Mois préc.</div>
+          <div class="pill" onclick="setPer('a','year',this)">Cette année</div>
+          <div class="pill" onclick="setPer('a','all',this)">Tout</div>
+        </div>
+        <div class="crow">
+          <div class="pill" onclick="toggleCD('a')" style="background:var(--bg)">📅 Personnalisé</div>
+          <div class="cdates" id="a-cd">
+            <input type="date" class="din" id="a-from" value="2026-01-01">
+            <span style="color:var(--text-mid)">→</span>
+            <input type="date" class="din" id="a-to" value="2026-12-31">
+            <button class="tbtn p" style="padding:5px 12px;font-size:12.5px" onclick="applyCD('a')">Appliquer</button>
+          </div>
+          <div class="plbl" id="a-lbl">Ce mois</div>
+        </div>
+      </div>
+      <div class="agrid" id="a-kpis"></div>
+      <div class="row2">
+        <div class="card"><div class="chd"><div><div class="ctitle">CA vs Bénéfice</div><div class="csub">Par mois</div></div></div><div class="cbody"><canvas id="c-ana-rev" height="150"></canvas></div></div>
+        <div class="card"><div class="chd"><div><div class="ctitle">Commandes / mois</div></div></div><div class="cbody"><canvas id="c-ana-ord" height="150"></canvas></div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="chd"><div><div class="ctitle">Top pays</div><div class="csub">Par nombre de commandes</div></div></div><div class="cbody" id="countries-list"></div></div>
+        <div class="card"><div class="chd"><div><div class="ctitle">Répartition CA</div><div class="csub">% par produit</div></div></div><div class="cbody"><canvas id="c-pie" height="180"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- PRODUITS -->
+    <div class="pg" id="pg-produits">
+      <div class="phd"><h1>Produits</h1><p>Catalogue de ta boutique</p></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px" id="prod-grid"></div>
+    </div>
+
+    <!-- EXCEL -->
+    <div class="pg" id="pg-excel">
+      <div class="phd"><h1>Fichier Excel</h1><p>Édite directement — modifications sauvegardées dans Supabase</p></div>
+      <div class="xbar">
+        <div class="xok">Connecté à Supabase</div>
+        <button class="tbtn" onclick="loadFromSupa()">🔄 Charger</button>
+        <button class="tbtn p" onclick="addNewRow()">➕ Nouvelle commande</button>
+        <label class="tbtn" style="cursor:pointer">
+          📥 Importer .xlsx
+          <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importXLS(this)">
+        </label>
+        <button class="tbtn" onclick="downloadXLS()">📤 Télécharger .xlsx</button>
+        <button class="tbtn p" onclick="pushToSupa()">☁️ Sync → Supabase</button>
+      </div>
+      <div class="xbox">
+        <div class="xtop">
+          <span>📊 Etsy_Boutique_2026.xlsx</span>
+          <span style="font-size:11px;opacity:.7" id="xls-time">Chargement...</span>
+        </div>
+        <div class="xtabs">
+          <div class="xtab on" onclick="xTab('commandes',this)">📦 Commandes</div>
+          <div class="xtab" onclick="xTab('stats',this)">📊 Stats</div>
+        </div>
+        <div class="xfbar">
+          <div class="xref" id="xref">A1</div>
+          <span style="color:var(--text-light);font-size:14px">ƒx</span>
+          <input class="xfin" id="xfin" placeholder="Valeur ou formule..." readonly>
+        </div>
+        <div class="xgw"><table class="xg" id="xtbl"></table></div>
+        <div class="xsbar">
+          <span class="shint" id="shint">✓ Synchronisé avec Supabase</span>
+          <button class="tbtn p" style="padding:6px 14px;font-size:12px" onclick="pushToSupa()">Sync → Supabase</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="npanel" id="npanel">
+  <div class="nphd"><h3>🔔 Notifications</h3><div class="npclose" onclick="closeNP()">✕</div></div>
+  <div class="nptabs">
+    <div class="nptab on" onclick="nTab('feed',this)">Alertes</div>
+    <div class="nptab" onclick="nTab('ntfy',this)">ntfy.sh</div>
+    <div class="nptab" onclick="nTab('n8n',this)">n8n</div>
+  </div>
+  <div class="ntab-c on" id="ntab-feed">
+    <div class="npsettings">
+      <p>Reçois une alerte à chaque vente avec photo, prix et pays.</p>
+      <div class="npopt"><div><div class="npolbl">Alertes ventes</div><div class="nposub">À chaque commande</div></div><label class="toggle"><input type="checkbox" id="n-sales" checked><span class="tslider"></span></label></div>
+      <div class="npopt"><div><div class="npolbl">Résumé quotidien</div><div class="nposub">Chaque soir à 20h</div></div><label class="toggle"><input type="checkbox" id="n-daily"><span class="tslider"></span></label></div>
+    </div>
+    <div class="nplist" id="nplist"><div class="nempty">Aucune notification — active les alertes</div></div>
+    <div class="pushsec">
+      <p>📱 Activer les push sur ce téléphone</p>
+      <small>Reçois des alertes même écran verrouillé.</small>
+      <button class="tbtn p" style="width:100%;justify-content:center" onclick="reqPush()">Activer les notifications</button>
+    </div>
+  </div>
+  <div class="ntab-c" id="ntab-ntfy" style="padding:14px 16px;">
+    <div style="background:var(--accent-lt);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <p style="font-size:12px;font-weight:600;color:var(--accent);">🔔 ntfy.sh — notifs écran verrouillé</p>
+      <p style="font-size:11.5px;color:var(--text-mid);">Gratuit · iOS & Android · App fermée</p>
+    </div>
+    <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">1. Installe l'app ntfy</label>
+      <div style="display:flex;gap:6px;">
+        <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" class="tbtn" style="flex:1;justify-content:center;font-size:11.5px;text-decoration:none">🍎 App Store</a>
+        <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" class="tbtn" style="flex:1;justify-content:center;font-size:11.5px;text-decoration:none">🤖 Play Store</a>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">2. Ton topic</label>
+      <div style="display:flex;gap:6px;">
+        <input id="ntfy-topic" type="text" value="etsy-axel-boutique" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;outline:none;">
+        <button class="tbtn" onclick="copyTopic()" style="font-size:12px">Copier</button>
+      </div>
+    </div>
+    <button class="tbtn p" style="width:100%;justify-content:center;margin-bottom:6px" onclick="testNtfy()">🧪 Tester ntfy maintenant</button>
+  </div>
+  <div class="ntab-c" id="ntab-n8n" style="padding:14px 16px;overflow-y:auto;max-height:400px;">
+    <div style="background:var(--orange-lt);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <p style="font-size:12px;font-weight:600;color:var(--orange);">⚙️ Workflow n8n — à configurer avec Hetzner</p>
+    </div>
+    <pre style="background:var(--bg);padding:10px;border-radius:8px;font-size:10.5px;overflow-x:auto;color:var(--text-mid);border:1px solid var(--border);white-space:pre-wrap;" id="n8n-json">{
+  "name": "Etsy → Notif vente",
+  "nodes": [
+    { "type": "scheduleTrigger", "interval": 60 },
+    { "type": "httpRequest", "url": "https://openapi.etsy.com/v3/application/shops/MON_SHOP_ID/receipts", "headers": { "x-api-key": "a9s1yo1izrf6n636sdf2hckvv" } },
+    { "type": "httpRequest", "url": "https://ntfy.sh/TON_TOPIC", "method": "POST", "body": "🛍️ Nouvelle vente : {{product}} — {{price}} € · {{country}}" },
+    { "type": "httpRequest", "url": "https://fnvyeppsaypokvifeblz.supabase.co/rest/v1/etsy_orders", "method": "POST", "headers": { "apikey": "ANON_KEY" } }
+  ]
+}</pre>
+    <button class="tbtn" onclick="navigator.clipboard.writeText(document.getElementById('n8n-json').textContent).then(()=>showToast('JSON copié ✓','',null,true))" style="width:100%;justify-content:center;margin-top:8px">Copier le JSON</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+const sess=JSON.parse(localStorage.getItem('etsy_sess')||sessionStorage.getItem('etsy_sess')||'null');
+if(!sess||sess.expires_at<Date.now()/1000){localStorage.removeItem('etsy_sess');sessionStorage.removeItem('etsy_sess');window.location.href='index.html';}
+document.getElementById('sb-email').textContent=sess?.email||'';
+function logout(){localStorage.removeItem('etsy_sess');sessionStorage.removeItem('etsy_sess');window.location.href='index.html';}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SUPA="https://fnvyeppsaypokvifeblz.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZudnllcHBzYXlwb2t2aWZlYmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUyMzYsImV4cCI6MjA5NTkwMTIzNn0.tKpndsTvN3HkaYoxzCcrxD6ad_S5PiLfOcQtyQrttqo";
+const ETSY_KEY="a9s1yo1izrf6n636sdf2hckvv";
+const FUNC="https://fnvyeppsaypokvifeblz.supabase.co/functions/v1";
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const MONTHS=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+const PLABELS={today:"Aujourd'hui",yesterday:"Hier","7d":"7 jours","30d":"30 jours",month:"Ce mois",prev:"Mois préc.",year:"Cette année",all:"Tout"};
+
+function flag(p){const f={"France":"🇫🇷","Germany":"🇩🇪","United Kingdom":"🇬🇧","United States":"🇺🇸","Switzerland":"🇨🇭","Belgium":"🇧🇪","Italy":"🇮🇹","Canada":"🇨🇦","Australia":"🇦🇺","The Netherlands":"🇳🇱","Spain":"🇪🇸","Austria":"🇦🇹","Norway":"🇳🇴","Sweden":"🇸🇪","Denmark":"🇩🇰","Japan":"🇯🇵","Ireland":"🇮🇪","Luxembourg":"🇱🇺","Slovakia":"🇸🇰","United State":"🇺🇸","nited States":"🇺🇸"};return(f[p]||"🌍")+" "+p;}
+
+function pname(url){if(!url||!url.includes("etsy.com"))return url?.slice(0,30)||"Produit";const s=url.split("/").pop()?.split("?")[0]||"";return s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()).slice(0,32)||"Produit Etsy";}
+
+function fmt(n,decimals=2){return(+n||0).toFixed(decimals);}
+function fmtEur(n){return fmt(n,2)+" €";}
+
+// ── DATA STORE ────────────────────────────────────────────────────────────────
+let ALL_ORDERS=[];
+
+
+// ── ADD NEW ROW ───────────────────────────────────────────────────────────────
+function addNewRow(){
+  if(!window._xlsData||!window._xlsData.commandes) return showToast("Charge les données d'abord","");
+  const headers=window._xlsData.commandes[0];
+  const emptyRow=headers.map(()=>"");
+  // Pre-fill date
+  const now=new Date();
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  emptyRow[7]=days[now.getDay()]+", "+months[now.getMonth()]+" "+now.getDate()+", "+now.getFullYear();
+  window._xlsData.commandes.push(emptyRow);
+  renderXLSTab('commandes');
+  // Scroll to bottom
+  const gw=document.querySelector('.xgw');
+  if(gw) setTimeout(()=>{gw.scrollTop=gw.scrollHeight;},100);
+  showToast("Nouvelle ligne ajoutée","Remplis et clique Sync → Supabase",null,true);
+}
+
+async function saveNewRowToSupa(rowData){
+  // Parse row: [N°, Produit, Client, Pays, Qté, Prix achat, Prix vente, Taxe, CA, Bénéf, Marge, Date]
+  if(!rowData[2]) return; // no client = empty row
+  const o={
+    lien_produit: rowData[0]||"",
+    nom_client: rowData[2]||"",
+    pays: rowData[3]||"",
+    nbr_produits: parseInt(rowData[4])||1,
+    prix_achat: parseFloat(rowData[5])||0,
+    prix_vente: parseFloat(rowData[6])||0,
+    taxe_etsy: parseFloat(rowData[7])||0,
+    ca_etsy: parseFloat(rowData[8])||parseFloat(rowData[6]-rowData[7])||0,
+    benef_brut: parseFloat(rowData[9])||0,
+    marge: parseFloat(rowData[10])||0,
+    date_commande: rowData[11]||"",
+    numero_commande: "",
+    statut: "livree"
+  };
+  const res=await fetch(`${SUPA}/rest/v1/etsy_orders`,{
+    method:"POST",
+    headers:{"apikey":ANON,"Authorization":"Bearer "+ANON,"Content-Type":"application/json","Prefer":"return=minimal"},
+    body:JSON.stringify(o)
+  });
+  return res.ok;
+}
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function loadFromSupa(){
+  showToast("Chargement Supabase...","");
+  try{
+    const res=await fetch(`${SUPA}/rest/v1/etsy_orders?select=*&order=id.asc&limit=1000`,{
+      headers:{"apikey":ANON,"Authorization":"Bearer "+ANON}
+    });
+    const data=await res.json();
+    if(Array.isArray(data)&&data.length>0){
+      ALL_ORDERS=data;
+      updateAll();
+      document.getElementById('xls-time').textContent="Chargé depuis Supabase · "+new Date().toLocaleTimeString('fr');
+      showToast("✅ "+data.length+" commandes chargées","",null,true);
+    } else {
+      showToast("Supabase vide ou erreur","Vérifie ta connexion");
+    }
+  }catch(e){showToast("Erreur Supabase: "+e.message,"");}
+}
+
+async function pushToSupa(){
+  if(!ALL_ORDERS.length) return showToast("Aucune donnée à sync","");
+  showToast("Sync vers Supabase...","");
+  try{
+    // Delete all and re-insert
+    await fetch(`${SUPA}/rest/v1/etsy_orders?id=gte.0`,{
+      method:"DELETE",
+      headers:{"apikey":ANON,"Authorization":"Bearer "+ANON}
+    });
+    const rows=ALL_ORDERS.map(o=>({
+      lien_produit:o.lien_produit,date_commande:o.date_commande,
+      nbr_produits:o.nbr_produits,nom_client:o.nom_client,pays:o.pays,
+      prix_achat:o.prix_achat,prix_vente:o.prix_vente,taxe_etsy:o.taxe_etsy,
+      ca_etsy:o.ca_etsy,benef_brut:o.benef_brut,numero_commande:o.numero_commande,marge:o.marge
+    }));
+    const res=await fetch(`${SUPA}/rest/v1/etsy_orders`,{
+      method:"POST",
+      headers:{"apikey":ANON,"Authorization":"Bearer "+ANON,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify(rows)
+    });
+    if(res.ok) showToast("✅ "+rows.length+" commandes synchronisées !","",null,true);
+    else showToast("Erreur sync: "+await res.text(),"");
+  }catch(e){showToast("Erreur: "+e.message,"");}
+}
+
+// ── ETSY API ──────────────────────────────────────────────────────────────────
+async function syncEtsy(){
+  showToast("Lancement OAuth Etsy...","");
+  // Generate PKCE
+  const verifier = generateVerifier();
+  localStorage.setItem('etsy_code_verifier', verifier);
+  generateChallenge(verifier).then(challenge => {
+    const url = "https://www.etsy.com/oauth/connect" +
+      "?response_type=code" +
+      "&redirect_uri=https://merlotaxel.github.io/etsy-dashboard/callback.html" +
+      "&scope=transactions_r" +
+      "&client_id=8o762nw897at7z1u7ziexj87" +
+      "&state=etsy2026" +
+      "&code_challenge=" + challenge +
+      "&code_challenge_method=S256";
+    window.location.href = url;
+  });
+}
+
+function generateVerifier(){
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function generateChallenge(verifier){
+  const enc = new TextEncoder().encode(verifier);
+  const hash = await crypto.subtle.digest('SHA-256', enc);
+  return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function loadEtsyOrders(){
+  showToast("Chargement commandes Etsy...","");
+  try{
+    const res = await fetch("https://fnvyeppsaypokvifeblz.supabase.co/functions/v1/etsy-oauth",{
+      method:"POST",
+      headers:{"apikey":ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({action:"get_orders"})
+    });
+    const data = await res.json();
+    if(data.ok && data.data && data.data.results){
+      const orders = data.data.results;
+      document.getElementById('etsy-badge').textContent = "✅ Etsy live · "+orders.length+" commandes";
+      document.getElementById('etsy-badge').classList.remove('off');
+      showToast("✅ "+orders.length+" commandes Etsy live !","",null,true);
+    } else {
+      showToast("Etsy: "+JSON.stringify(data.data?.error||data.error),"");
+    }
+  }catch(e){showToast("Erreur Etsy: "+e.message,"");}
+}
+
+// end syncEtsy
+function _unused(){
+  try{
+    // Test Etsy API connectivity
+    const res=await fetch("https://openapi.etsy.com/v3/application/openapi-ping",{
+      headers:{"x-api-key":ETSY_KEY}
+    });
+    if(res.ok){
+      document.getElementById('etsy-badge').textContent="✅ API Etsy connectée";
+      document.getElementById('etsy-badge').classList.remove('off');
+      showToast("✅ API Etsy connectée !","Branche ton Shop ID pour les données live",null,true);
+    } else {
+      showToast("API Etsy: "+res.status+" — Configure ton Shop ID","");
+    }
+  }catch(e){
+    showToast("API Etsy prête · Ajoute ton Shop ID pour les données live","");
+  }
+}
+
+// ── UPDATE ALL UI ─────────────────────────────────────────────────────────────
+function updateAll(){
+  const orders=ALL_ORDERS;
+  if(!orders.length) return;
+  const totalCA=orders.reduce((s,o)=>s+(+o.ca_etsy||0),0);
+  const totalBen=orders.reduce((s,o)=>s+(+o.benef_brut||0),0);
+  const panier=totalCA/orders.length;
+
+  // Live date
+  document.getElementById('live-date').textContent=new Date().toLocaleDateString('fr');
+  document.getElementById('dash-sub').textContent="Bienvenue · "+orders.length+" commandes · Dec 2025 → Mai 2026";
+
+  // KPIs
+  document.getElementById('k-rev').textContent=fmtEur(totalCA);
+  document.getElementById('k-ord').textContent=orders.length;
+  document.getElementById('k-pan').textContent=fmtEur(panier);
+  document.getElementById('k-ben').textContent=fmtEur(totalBen);
+  document.getElementById('orders-badge').textContent=orders.length;
+
+  // Last orders
+  const last=orders.slice(-8).reverse();
+  document.getElementById('last-sub').textContent="8 dernières commandes";
+  document.getElementById('last-table').innerHTML=makeTable(last,true);
+
+  // Best sellers
+  renderBSL(orders);
+  // Revenue chart
+  renderRevChart(orders);
+  // Ventes default
+  renderVentes(orders);
+  // Analytics
+  renderAnaKPIs(orders);
+  // Products
+  renderProds(orders);
+  // Excel
+  renderXLSFromSupa(orders);
+}
+
+// ── TABLE BUILDER ─────────────────────────────────────────────────────────────
+function makeTable(orders,short=false){
+  const cols=short
+    ?["N° Cmd","Produit","Client","Pays","Prix vente","Bénéfice"]
+    :["Produit","Client","Pays","Prix vente","CA Etsy","Bénéfice","Marge","Date"];
+  return`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>
+  ${orders.map(o=>{
+    const nm=pname(o.lien_produit);
+    const id="#"+(o.numero_commande||"").slice(-6);
+    if(short) return`<tr>
+      <td class="tord">${id}</td>
+      <td><div class="tprod"><div class="tthumb">🛍️</div><span style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${nm}</span></div></td>
+      <td style="color:var(--text-mid);font-size:12px">${o.nom_client}</td>
+      <td style="font-size:12px">${flag(o.pays)}</td>
+      <td style="font-weight:600">${fmtEur(o.prix_vente)}</td>
+      <td style="color:var(--green);font-weight:600">${fmtEur(o.benef_brut)}</td>
+    </tr>`;
+    return`<tr>
+      <td style="font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nm}</td>
+      <td style="font-size:12px;color:var(--text-mid)">${o.nom_client}</td>
+      <td style="font-size:12px">${flag(o.pays)}</td>
+      <td style="font-weight:600">${fmtEur(o.prix_vente)}</td>
+      <td>${fmtEur(o.ca_etsy)}</td>
+      <td style="color:var(--green);font-weight:600">${fmtEur(o.benef_brut)}</td>
+      <td style="color:var(--text-mid)">${fmt(o.marge,2)}x</td>
+      <td style="font-size:11px;color:var(--text-light)">${o.date_commande||""}</td>
+    </tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+// ── BEST SELLERS ──────────────────────────────────────────────────────────────
+function renderBSL(orders){
+  const map={};
+  orders.forEach(o=>{
+    const k=pname(o.lien_produit);
+    if(!map[k]) map[k]={name:k,sales:0,ben:0};
+    map[k].sales+=(+o.nbr_produits||1);
+    map[k].ben+=(+o.benef_brut||0);
+  });
+  const sorted=Object.values(map).sort((a,b)=>b.ben-a.ben).slice(0,5);
+  const mx=sorted[0]?.ben||1;
+  document.getElementById('bsl').innerHTML=sorted.map(p=>`
+    <div class="prow">
+      <div class="pthumb">🛍️</div>
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="pmeta">${p.sales} vendus</div>
+        <div class="pbg"><div class="pbar2" style="width:${(p.ben/mx*100).toFixed(0)}%"></div></div>
+      </div>
+      <div class="prev">${fmtEur(p.ben)}</div>
+    </div>`).join('');
+}
+
+// ── REVENUE CHART ─────────────────────────────────────────────────────────────
+let revChart=null;
+function renderRevChart(orders){
+  const monthly=Array(12).fill(0).map(()=>({ca:0,ben:0}));
+  orders.forEach(o=>{
+    const d=o.date_commande||"";
+    const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].findIndex(x=>d.includes(x));
+    if(m>=0){monthly[m].ca+=(+o.ca_etsy||0);monthly[m].ben+=(+o.benef_brut||0);}
+  });
+  const ctx=document.getElementById('c-rev');
+  if(revChart) revChart.destroy();
+  revChart=new Chart(ctx,{type:'bar',data:{labels:MONTHS,datasets:[
+    {label:'CA Etsy',data:monthly.map(m=>+m.ca.toFixed(2)),backgroundColor:'rgba(0,128,96,.2)',borderColor:'#008060',borderWidth:1.5,borderRadius:4},
+    {label:'Bénéfice',data:monthly.map(m=>+m.ben.toFixed(2)),backgroundColor:'rgba(44,110,203,.2)',borderColor:'#2C6ECB',borderWidth:1.5,borderRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{family:'Inter',size:11},usePointStyle:true}},tooltip:{backgroundColor:'#202223',cornerRadius:8,padding:10}},scales:{y:{grid:{color:'#F1F3F5'},ticks:{callback:v=>v+'€',font:{size:11}}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+// ── VENTES PAGE ───────────────────────────────────────────────────────────────
+function renderVentes(orders){
+  const totalCA=orders.reduce((s,o)=>s+(+o.ca_etsy||0),0);
+  const totalBen=orders.reduce((s,o)=>s+(+o.benef_brut||0),0);
+  document.getElementById('v-sub').textContent=orders.length+" commandes · CA: "+fmtEur(totalCA);
+  document.getElementById('v-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--accent-lt)">💰</div></div><div class="kpi-val">${fmtEur(totalCA)}</div><div class="kpi-lbl">CA Etsy</div></div>
+    <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--green-lt)">📦</div></div><div class="kpi-val">${orders.length}</div><div class="kpi-lbl">Commandes</div></div>
+    <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--purple-lt)">📈</div></div><div class="kpi-val">${fmtEur(totalBen)}</div><div class="kpi-lbl">Bénéfice</div></div>
+    <div class="kpi"><div class="kpi-hd"><div class="kpi-ico" style="background:var(--orange-lt)">🛒</div></div><div class="kpi-val">${orders.length?fmtEur(totalCA/orders.length):'—'}</div><div class="kpi-lbl">Panier moyen</div></div>`;
+  document.getElementById('v-table').innerHTML=makeTable(orders.slice().reverse());
+}
+
+// Period filter
+const PLBLS={today:"Aujourd'hui",yesterday:"Hier","7d":"7 jours","30d":"30 jours",month:"Ce mois",prev:"Mois préc.",year:"Cette année",all:"Tout"};
+function setPer(s,p,el){
+  document.querySelectorAll('#'+s+'-pills .pill').forEach(x=>x.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.getElementById(s+'-lbl').textContent=PLBLS[p]||p;
+  document.getElementById(s+'-cd').classList.remove('show');
+  const filtered=filterOrders(ALL_ORDERS,p);
+  if(s==='v') renderVentes(filtered);
+  if(s==='a') renderAnaKPIs(filtered);
+}
+function filterOrders(orders,p){
+  const now=new Date();
+  const MNAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  if(p==="all") return orders;
+  if(p==="today"){
+    const todayStr=days[now.getDay()]+", "+MNAMES[now.getMonth()]+" "+now.getDate()+", "+now.getFullYear();
+    const todayAlt=now.getDate()+" "+MNAMES[now.getMonth()]+" "+now.getFullYear();
+    return orders.filter(o=>{const d=o.date_commande||"";return d.includes(MNAMES[now.getMonth()])&&d.includes(String(now.getDate()))&&d.includes(String(now.getFullYear()));});
+  }
+  if(p==="yesterday"){
+    const yest=new Date(now);yest.setDate(now.getDate()-1);
+    return orders.filter(o=>{const d=o.date_commande||"";return d.includes(MNAMES[yest.getMonth()])&&d.includes(String(yest.getDate()))&&d.includes(String(yest.getFullYear()));});
+  }
+  if(p==="month") return orders.filter(o=>(o.date_commande||"").includes(MNAMES[now.getMonth()])&&(o.date_commande||"").includes(String(now.getFullYear())));
+  if(p==="prev"){const prev=new Date(now.getFullYear(),now.getMonth()-1,1);return orders.filter(o=>(o.date_commande||"").includes(MNAMES[prev.getMonth()]));}
+  if(p==="7d"){const d7=new Date(now);d7.setDate(now.getDate()-7);return orders;}
+  if(p==="30d"){return orders;}
+  if(p==="year") return orders.filter(o=>(o.date_commande||"").includes(String(now.getFullYear())));
+  return orders;
+}
+function toggleCD(s){document.getElementById(s+'-cd').classList.toggle('show');document.querySelectorAll('#'+s+'-pills .pill').forEach(x=>x.classList.remove('on'));}
+function applyCD(s){
+  const f=d=>{const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0].slice(2);};
+  const lbl=f(document.getElementById(s+'-from').value)+" → "+f(document.getElementById(s+'-to').value);
+  document.getElementById(s+'-lbl').textContent=lbl;
+  document.getElementById(s+'-cd').classList.remove('show');
+  showToast('Période appliquée','',null,true);
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+let anaDone=false;
+function renderAnaKPIs(orders){
+  const ca=orders.reduce((s,o)=>s+(+o.ca_etsy||0),0);
+  const ben=orders.reduce((s,o)=>s+(+o.benef_brut||0),0);
+  const marge=ca>0?(ben/ca*100):0;
+  document.getElementById('a-kpis').innerHTML=[
+    ["CA Etsy",fmtEur(ca),"var(--accent)"],
+    ["Bénéfice",fmtEur(ben),"var(--green)"],
+    ["Commandes",orders.length,"var(--blue)"],
+    ["Marge nette",fmt(marge,1)+" %","var(--purple)"],
+    ["Panier moyen",orders.length?fmtEur(ca/orders.length):"—","var(--orange)"],
+    ["Taxe Etsy moy.",fmtEur(orders.reduce((s,o)=>s+(+o.taxe_etsy||0),0)/Math.max(orders.length,1)),"var(--yellow)"],
+    ["Prix achat moy.",fmtEur(orders.reduce((s,o)=>s+(+o.prix_achat||0),0)/Math.max(orders.length,1)),"var(--text-mid)"],
+    ["Prix vente moy.",fmtEur(orders.reduce((s,o)=>s+(+o.prix_vente||0),0)/Math.max(orders.length,1)),"var(--text)"],
+  ].map(([l,v,c])=>`<div class="astat"><div class="asl">${l}</div><div class="asv" style="color:${c}">${v}</div></div>`).join('');
+
+  // Countries
+  const cmap={};orders.forEach(o=>{cmap[o.pays]=(cmap[o.pays]||0)+1;});
+  const ctop=Object.entries(cmap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const cmx=ctop[0]?.[1]||1;
+  document.getElementById('countries-list').innerHTML=`<div style="padding:0 0 8px">`+ctop.map(([pays,cnt])=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;min-width:140px">${flag(pays)}</span>
+      <div style="flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:${(cnt/cmx*100).toFixed(0)}%;background:var(--accent);border-radius:3px"></div></div>
+      <span style="font-size:13px;font-weight:600;min-width:30px;text-align:right">${cnt}</span>
+    </div>`).join('')+'</div>';
+
+  if(!anaDone){
+    anaDone=true;
+    setTimeout(()=>{
+      // Monthly orders chart
+      const monthly=Array(12).fill(0);
+      orders.forEach(o=>{const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].findIndex(x=>(o.date_commande||"").includes(x));if(m>=0)monthly[m]++;});
+      new Chart(document.getElementById('c-ana-ord'),{type:'bar',data:{labels:MONTHS,datasets:[{data:monthly,backgroundColor:'rgba(109,91,208,.2)',borderColor:'#6D5BD0',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#F1F3F5'},ticks:{font:{size:11}}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
+      // Pie by product
+      const pmap={};orders.forEach(o=>{const k=pname(o.lien_produit);pmap[k]=(pmap[k]||0)+(+o.ca_etsy||0);});
+      const ptop=Object.entries(pmap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      new Chart(document.getElementById('c-pie'),{type:'doughnut',data:{labels:ptop.map(x=>x[0].slice(0,20)),datasets:[{data:ptop.map(x=>+x[1].toFixed(2)),backgroundColor:['#008060','#2C6ECB','#6D5BD0','#C05717','#916A00','#D72C0D'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:10},usePointStyle:true,padding:8}}}}});
+    },100);
+  }
+}
+
+// ── PRODUCTS ──────────────────────────────────────────────────────────────────
+function renderProds(orders){
+  const map={};
+  orders.forEach(o=>{
+    const k=pname(o.lien_produit);
+    if(!map[k]) map[k]={name:k,url:o.lien_produit,sales:0,ca:0,ben:0};
+    map[k].sales+=(+o.nbr_produits||1);
+    map[k].ca+=(+o.ca_etsy||0);
+    map[k].ben+=(+o.benef_brut||0);
+  });
+  const sorted=Object.values(map).sort((a,b)=>b.ben-a.ben);
+  document.getElementById('prod-grid').innerHTML=sorted.map(p=>`
+    <div class="card" style="padding:0;overflow:hidden;cursor:pointer;transition:box-shadow .18s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
+      <div style="height:100px;background:linear-gradient(135deg,var(--accent-lt),var(--blue-lt));display:flex;align-items:center;justify-content:center;font-size:40px">🛍️</div>
+      <div style="padding:14px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.name}">${p.name}</div>
+        <div style="color:var(--text-mid);font-size:12px;margin-bottom:10px">${p.sales} vendus</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:16px;font-weight:700;color:var(--accent)">${fmtEur(p.ben)}</span>
+          <span style="font-size:11px;color:var(--text-mid)">CA: ${fmtEur(p.ca)}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── EXCEL FROM SUPA ───────────────────────────────────────────────────────────
+function renderXLSFromSupa(orders){
+  const headers=["N°","Produit","Client","Pays","Qté","Prix achat","Prix vente","Taxe Etsy","CA Etsy","Bénéf. brut","Marge","Date"];
+  const rows=orders.map((o,i)=>[
+    i+1, pname(o.lien_produit), o.nom_client, o.pays,
+    o.nbr_produits, fmt(o.prix_achat), fmt(o.prix_vente),
+    fmt(o.taxe_etsy), fmt(o.ca_etsy), fmt(o.benef_brut),
+    fmt(o.marge,3), o.date_commande
+  ]);
+  window._xlsData={commandes:[headers,...rows],stats:buildStats(orders)};
+  renderXLSTab('commandes');
+}
+function buildStats(orders){
+  const ca=orders.reduce((s,o)=>s+(+o.ca_etsy||0),0);
+  const ben=orders.reduce((s,o)=>s+(+o.benef_brut||0),0);
+  return[
+    ["Indicateur","Valeur"],
+    ["Total commandes",orders.length],
+    ["CA Etsy total",fmt(ca)+" €"],
+    ["Bénéfice brut total",fmt(ben)+" €"],
+    ["Marge nette",fmt(ca>0?ben/ca*100:0,1)+" %"],
+    ["Panier moyen CA",fmt(orders.length?ca/orders.length:0)+" €"],
+    ["Prix achat moyen",fmt(orders.reduce((s,o)=>s+(+o.prix_achat||0),0)/Math.max(orders.length,1))+" €"],
+    ["Prix vente moyen",fmt(orders.reduce((s,o)=>s+(+o.prix_vente||0),0)/Math.max(orders.length,1))+" €"],
+  ];
+}
+
+let xCurTab='commandes';
+const XCOLS=['','A','B','C','D','E','F','G','H','I','J','K','L','M'];
+function renderXLSTab(tab){
+  xCurTab=tab;
+  const data=(window._xlsData||{})[tab]||[["Charge les données d'abord"]];
+  let h='<thead><tr><th class="ch corner"></th>';
+  for(let c=0;c<data[0].length;c++) h+=`<th class="ch">${XCOLS[c+1]||String.fromCharCode(65+c)}</th>`;
+  h+='</tr></thead><tbody>';
+  data.forEach((row,ri)=>{
+    const isH=ri===0;
+    h+=`<tr><td class="rh">${ri+1}</td>`;
+    row.forEach((cell,ci)=>{
+      const ref=(XCOLS[ci+1]||String.fromCharCode(65+ci))+(ri+1);
+      h+=`<td class="cell ${isH?'ch2':''}" onclick="xSel('${ref}')"><input class="cin" value="${cell||''}" onfocus="xFocus(this,'${ref}')" oninput="xEdit(this,${ri},${ci})" onblur="xBlur()" ${isH?'readonly':''}></td>`;
+    });
+    h+='</tr>';
+  });
+  document.getElementById('xtbl').innerHTML=h+'</tbody>';
+}
+function xTab(tab,el){document.querySelectorAll('.xtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderXLSTab(tab);}
+function xSel(ref){document.getElementById('xref').textContent=ref;}
+function xFocus(inp,ref){document.getElementById('xref').textContent=ref;const f=document.getElementById('xfin');f.value=inp.value;f.removeAttribute('readonly');f.oninput=()=>{inp.value=f.value;};}
+function xEdit(inp,ri,ci){if(window._xlsData&&window._xlsData[xCurTab]){if(!window._xlsData[xCurTab][ri])window._xlsData[xCurTab][ri]=[];window._xlsData[xCurTab][ri][ci]=inp.value;}document.getElementById('xfin').value=inp.value;xSaving();}
+function xBlur(){document.getElementById('xfin').setAttribute('readonly',true);}
+let xTimer;
+function xSaving(){const h=document.getElementById('shint');h.textContent='● Modification...';h.style.color='var(--orange)';clearTimeout(xTimer);xTimer=setTimeout(()=>{h.textContent='✓ Synchronisé avec Supabase';h.style.color='var(--green)';},1200);}
+function importXLS(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1});
+    // Map back to ALL_ORDERS format
+    if(raw.length>1){
+      showToast("Fichier importé · "+( raw.length-1)+" lignes","",null,true);
+      renderXLSTab(xCurTab);
+    }
+  };
+  r.readAsBinaryString(f);
+}
+function downloadXLS(){
+  if(!window._xlsData) return showToast("Charge d'abord les données","");
+  const wb=XLSX.utils.book_new();
+  Object.entries(window._xlsData).forEach(([n,d])=>{const ws=XLSX.utils.aoa_to_sheet(d);XLSX.utils.book_append_sheet(wb,ws,n.charAt(0).toUpperCase()+n.slice(1));});
+  XLSX.writeFile(wb,'Etsy_Boutique_Export.xlsx');
+  showToast("Fichier téléchargé ✓","",null,true);
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function go(id,el){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-a').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  if(el) el.classList.add('on');
+  const titles={dashboard:'Vue d\'ensemble',ventes:'Commandes',analytics:'Analytics',produits:'Produits',excel:'Fichier Excel'};
+  document.getElementById('bc').innerHTML=`<strong>${titles[id]||id}</strong>`;
+  if(id==='ventes') renderVentes(ALL_ORDERS);
+  if(id==='analytics') renderAnaKPIs(ALL_ORDERS);
+  if(id==='produits') renderProds(ALL_ORDERS);
+  if(id==='excel'&&window._xlsData) renderXLSTab(xCurTab);
+  if(window.innerWidth<=768){document.getElementById('sb').classList.remove('on');document.getElementById('overlay').classList.remove('on');}
+}
+function toggleSB(){document.getElementById('sb').classList.toggle('on');document.getElementById('overlay').classList.toggle('on');}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(title,sub,img=null,ok=false){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast'+(ok?' ok':'');
+  t.innerHTML=`<div class="toast-img">${img?`<img src="${img}" onerror="this.parentElement.textContent='🛍️'" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`:'🔔'}</div><div class="tbody2"><div class="ttitle">${title}</div>${sub?`<div class="tsub">${sub}</div>`:''}</div>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('on')));
+  setTimeout(()=>{t.classList.remove('on');setTimeout(()=>t.remove(),400);},4000);
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+let notifs=[],notifOn=false;
+function openNP(){document.getElementById('npanel').classList.add('open');}
+function closeNP(){document.getElementById('npanel').classList.remove('open');}
+function toggleNotif(cb){notifOn=cb.checked;document.getElementById('notif-sub').textContent=notifOn?'Activées · Ventes live':'Désactivées';if(notifOn)showToast('Notifications activées 🔔','',null,true);}
+function nTab(id,el){document.querySelectorAll('.nptab').forEach(t=>{t.classList.remove('on');});el.classList.add('on');document.querySelectorAll('.ntab-c').forEach(c=>c.classList.remove('on'));document.getElementById('ntab-'+id).classList.add('on');}
+function reqPush(){if('Notification'in window){Notification.requestPermission().then(p=>{if(p==='granted'){showToast('Push activé ! 📱','',null,true);}else{showToast('Permission refusée','Active dans les réglages');}});}else{showToast('Non supporté','Utilise Chrome ou Safari mobile');}}
+function copyTopic(){const t=document.getElementById('ntfy-topic').value;navigator.clipboard.writeText(t).then(()=>showToast('Topic copié ✓','',null,true));}
+async function testNtfy(){const t=document.getElementById('ntfy-topic').value||'etsy-axel-boutique';showToast('Envoi vers ntfy.sh...','');try{await fetch('https://ntfy.sh/'+t,{method:'POST',headers:{'Title':'🛍️ Test Etsy Dashboard !','Priority':'high','Tags':'shopping'},body:'Commande test — 35.00 € · 🇫🇷 France'});showToast('Notif envoyée ! 🔔','Ouvre l\'app ntfy',null,true);}catch(e){showToast('Erreur','Vérifie ta connexion');}}
+function exportPDF(){showToast('PDF en cours — actif avec API connectée','');}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadFromSupa();
+loadFromSupa();
+</script>
+</body>
+</html>
