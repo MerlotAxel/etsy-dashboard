@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Boutique Etsy — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#F6F8FA;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.wrap{width:100%;max-width:400px;padding:24px;}
+.card{background:#fff;border-radius:16px;border:1px solid #E1E3E5;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:40px 36px;}
+.logo{text-align:center;margin-bottom:32px;}
+.logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#008060,#2C6ECB);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px;}
+.logo h1{font-size:22px;font-weight:700;color:#202223;}
+.logo p{font-size:13px;color:#6D7175;margin-top:4px;}
+.tabs{display:flex;background:#F6F8FA;border-radius:8px;padding:3px;margin-bottom:24px;gap:3px;}
+.tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;color:#6D7175;cursor:pointer;border-radius:6px;transition:all .15s;}
+.tab.on{background:#fff;color:#202223;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.section{display:none;}.section.on{display:block;}
+.group{margin-bottom:16px;}
+label{display:block;font-size:13px;font-weight:500;color:#202223;margin-bottom:6px;}
+input[type=email],input[type=password],input[type=text]{width:100%;padding:10px 14px;border:1.5px solid #E1E3E5;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:#202223;outline:none;transition:border .15s;}
+input[type=email]:focus,input[type=password]:focus,input[type=text]:focus{border-color:#2C6ECB;}
+.btn{width:100%;padding:12px;background:#008060;color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .18s;}
+.btn:hover{background:#006048;}
+.btn:disabled{background:#B5BDC4;cursor:not-allowed;}
+.btn-ghost{width:100%;padding:10px;background:none;color:#6D7175;border:1px solid #E1E3E5;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;margin-top:8px;transition:all .15s;}
+.btn-ghost:hover{background:#F6F8FA;color:#202223;}
+.error{background:#FFF4F4;border:1px solid #FEC9C9;border-radius:8px;padding:10px 14px;font-size:13px;color:#D72C0D;margin-bottom:16px;display:none;}
+.error.on{display:block;}
+.success{background:#E3F1ED;border:1px solid #95C9B4;border-radius:8px;padding:10px 14px;font-size:13px;color:#008060;margin-bottom:16px;display:none;}
+.success.on{display:block;}
+.spin-wrap{display:none;text-align:center;padding:8px;}.spin-wrap.on{display:block;}
+.spinner{width:20px;height:20px;border:2px solid #E1E3E5;border-top-color:#008060;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.footer{text-align:center;margin-top:20px;font-size:12px;color:#94A3B8;}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:20px 0;}
+.otp-inputs input{width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;border:1.5px solid #E1E3E5;border-radius:10px;font-family:'Inter',sans-serif;color:#202223;outline:none;transition:border .15s;}
+.otp-inputs input:focus{border-color:#2C6ECB;background:#EBF2FC;}
+.otp-hint{font-size:12px;color:#6D7175;text-align:center;margin-bottom:16px;line-height:1.5;}
+.badge-2fa{display:inline-flex;align-items:center;gap:6px;background:#EBF2FC;border:1px solid #2C6ECB33;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;color:#2C6ECB;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🛍️</div>
+      <h1>TheCozyMugAtelier</h1>
+      <p>Dashboard privé · Axel Merlot</p>
+    </div>
+
+    <div class="error" id="err"></div>
+    <div class="success" id="ok"></div>
+
+    <!-- ÉTAPE 1 : LOGIN -->
+    <div class="section on" id="section-login">
+      <div class="tabs">
+        <div class="tab on" onclick="switchTab('login',this)">Connexion</div>
+        <div class="tab" onclick="switchTab('signup',this)">Créer un compte</div>
+      </div>
+      <div id="section-login-form" class="section on">
+        <div class="group">
+          <label>Email</label>
+          <input type="email" id="l-email" placeholder="axel@example.com" autocomplete="email">
+        </div>
+        <div class="group">
+          <label>Mot de passe</label>
+          <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+        </div>
+        <div class="spin-wrap" id="spin-login"><div class="spinner"></div></div>
+        <button class="btn" id="btn-login" onclick="login()">Continuer →</button>
+      </div>
+      <div id="section-signup-form" class="section">
+        <div class="group">
+          <label>Email</label>
+          <input type="email" id="s-email" placeholder="axel@example.com">
+        </div>
+        <div class="group">
+          <label>Mot de passe</label>
+          <input type="password" id="s-pass" placeholder="Minimum 6 caractères" onkeydown="if(event.key==='Enter')signup()">
+        </div>
+        <div class="spin-wrap" id="spin-signup"><div class="spinner"></div></div>
+        <button class="btn" id="btn-signup" onclick="signup()">Créer mon compte</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : CODE 2FA -->
+    <div class="section" id="section-2fa">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:36px;margin-bottom:12px">🔐</div>
+        <div class="badge-2fa">🛡️ Vérification en 2 étapes</div>
+        <div style="font-size:15px;font-weight:700;color:#202223;margin-bottom:6px">Code de sécurité</div>
+        <div class="otp-hint">Un code à 6 chiffres a été envoyé à<br><strong id="otp-email-hint"></strong></div>
+      </div>
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" id="otp0" oninput="otpNext(0)" onkeydown="otpBack(0,event)">
+        <input type="text" maxlength="1" id="otp1" oninput="otpNext(1)" onkeydown="otpBack(1,event)">
+        <input type="text" maxlength="1" id="otp2" oninput="otpNext(2)" onkeydown="otpBack(2,event)">
+        <input type="text" maxlength="1" id="otp3" oninput="otpNext(3)" onkeydown="otpBack(3,event)">
+        <input type="text" maxlength="1" id="otp4" oninput="otpNext(4)" onkeydown="otpBack(4,event)">
+        <input type="text" maxlength="1" id="otp5" oninput="otpNext(5)" onkeydown="otpBack(5,event)">
+      </div>
+      <div class="spin-wrap" id="spin-2fa"><div class="spinner"></div></div>
+      <button class="btn" id="btn-2fa" onclick="verify2fa()">Vérifier le code</button>
+      <button class="btn-ghost" onclick="resendOTP()">📧 Renvoyer le code</button>
+      <button class="btn-ghost" onclick="backToLogin()">← Retour</button>
+    </div>
+
+  </div>
+  <div class="footer">🔒 Connexion sécurisée · 2FA activé</div>
+</div>
+
+<script>
+const SUPA="https://fnvyeppsaypokvifeblz.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZudnllcHBzYXlwb2t2aWZlYmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUyMzYsImV4cCI6MjA5NTkwMTIzNn0.tKpndsTvN3HkaYoxzCcrxD6ad_S5PiLfOcQtyQrttqo";
+
+let _pendingEmail = '';
+let _pendingToken = '';
+
+function err(m){const e=document.getElementById('err');e.textContent=m;e.classList.toggle('on',!!m);}
+function ok(m){const e=document.getElementById('ok');e.textContent=m;e.classList.toggle('on',!!m);}
+function setLoad(id,v){
+  const s=document.getElementById('spin-'+id);
+  const b=document.getElementById('btn-'+id);
+  if(s) s.classList.toggle('on',v);
+  if(b) b.disabled=v;
+}
+
+function switchTab(t,el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('section-login-form').classList.toggle('on', t==='login');
+  document.getElementById('section-signup-form').classList.toggle('on', t==='signup');
+  err(''); ok('');
+}
+
+// ── OTP INPUT UX ─────────────────────────────────────────────────────────────
+function otpNext(i){
+  const v=document.getElementById('otp'+i).value;
+  // Handle paste
+  if(v.length>1){
+    const digits=v.replace(/\D/g,'').slice(0,6);
+    for(let j=0;j<6;j++){
+      const el=document.getElementById('otp'+j);
+      if(el) el.value=digits[j]||'';
+    }
+    document.getElementById('otp5').focus();
+    return;
+  }
+  if(v&&i<5) document.getElementById('otp'+(i+1)).focus();
+  // Auto-submit if all filled
+  const code=getOTPCode();
+  if(code.length===6) verify2fa();
+}
+function otpBack(i,e){
+  if(e.key==='Backspace'&&!document.getElementById('otp'+i).value&&i>0){
+    document.getElementById('otp'+(i-1)).focus();
+  }
+}
+function getOTPCode(){
+  let c='';
+  for(let i=0;i<6;i++) c+=document.getElementById('otp'+i).value||'';
+  return c;
+}
+function clearOTP(){
+  for(let i=0;i<6;i++) document.getElementById('otp'+i).value='';
+  document.getElementById('otp0').focus();
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+async function login(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  if(!email||!pass) return err('Remplis tous les champs');
+  setLoad('login',true); err('');
+  try{
+    // Step 1: verify credentials
+    const res=await fetch(`${SUPA}/auth/v1/token?grant_type=password`,{
+      method:'POST',
+      headers:{'apikey':ANON,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})
+    });
+    const d=await res.json();
+    if(!d.access_token){
+      err(d.error_description||'Email ou mot de passe incorrect');
+      setLoad('login',false);
+      return;
+    }
+    // Credentials OK — store token temporarily and send OTP
+    _pendingEmail=email;
+    _pendingToken=JSON.stringify({access_token:d.access_token,expires_at:d.expires_at,email:d.user.email});
+
+    // Step 2: send OTP via Supabase
+    await sendOTP(email);
+
+  }catch(e){
+    err('Erreur réseau');
+    setLoad('login',false);
+  }
+}
+
+async function sendOTP(email){
+  try{
+    const res=await fetch(`${SUPA}/auth/v1/otp`,{
+      method:'POST',
+      headers:{'apikey':ANON,'Content-Type':'application/json'},
+      body:JSON.stringify({email, options:{shouldCreateUser:false}})
+    });
+    const d=await res.json();
+    // Show 2FA screen
+    document.getElementById('section-login').classList.remove('on');
+    document.getElementById('section-2fa').classList.add('on');
+    document.getElementById('otp-email-hint').textContent=email;
+    clearOTP();
+    ok('Code envoyé à '+email+' ✉️');
+  }catch(e){
+    err('Erreur envoi OTP');
+  }
+  setLoad('login',false);
+}
+
+// ── VERIFY 2FA ────────────────────────────────────────────────────────────────
+async function verify2fa(){
+  const code=getOTPCode();
+  if(code.length<6) return err('Saisis les 6 chiffres du code');
+  setLoad('2fa',true); err('');
+  try{
+    const res=await fetch(`${SUPA}/auth/v1/verify`,{
+      method:'POST',
+      headers:{'apikey':ANON,'Content-Type':'application/json'},
+      body:JSON.stringify({email:_pendingEmail, token:code, type:'email'})
+    });
+    const d=await res.json();
+    if(d.access_token || (d.user && d.user.id)){
+      // 2FA OK — store session in sessionStorage (expire à la fermeture de l'onglet)
+      sessionStorage.setItem('etsy_sess', _pendingToken);
+      window.location.href='dashboard.html';
+    } else {
+      err('Code incorrect ou expiré. Réessaie.');
+      clearOTP();
+    }
+  }catch(e){
+    err('Erreur réseau');
+  }
+  setLoad('2fa',false);
+}
+
+async function resendOTP(){
+  if(!_pendingEmail) return backToLogin();
+  ok(''); err('');
+  clearOTP();
+  await sendOTP(_pendingEmail);
+}
+
+function backToLogin(){
+  _pendingEmail='';
+  _pendingToken='';
+  document.getElementById('section-2fa').classList.remove('on');
+  document.getElementById('section-login').classList.add('on');
+  err(''); ok('');
+}
+
+// ── SIGNUP ────────────────────────────────────────────────────────────────────
+async function signup(){
+  const email=document.getElementById('s-email').value.trim();
+  const pass=document.getElementById('s-pass').value;
+  if(!email||!pass) return err('Remplis tous les champs');
+  if(pass.length<6) return err('Mot de passe minimum 6 caractères');
+  setLoad('signup',true); err('');
+  try{
+    const res=await fetch(`${SUPA}/auth/v1/signup`,{
+      method:'POST',
+      headers:{'apikey':ANON,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})
+    });
+    const d=await res.json();
+    if(d.id||d.user){
+      ok('✅ Compte créé ! Tu peux maintenant te connecter.');
+      switchTab('login',document.querySelectorAll('.tab')[0]);
+    } else {
+      err(d.msg||d.error_description||'Erreur lors de la création');
+    }
+  }catch(e){err('Erreur réseau');}
+  setLoad('signup',false);
+}
+</script>
+</body>
+</html>
